@@ -40,6 +40,7 @@ tile_width = tile_height = 50
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
+danger = pygame.sprite.Group()
 
 
 def load_level(filename):
@@ -58,12 +59,31 @@ def load_level(filename):
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
-def make_level():
-    p = ['.', '#', '-', '&', '@']
-    n = [['.' for _ in range(level_x)] for __ in range(level_y)]
-    for i in range(20):
-        n[random.randint(0, level_y - 1)][random.randint(0, level_x - 1)] = random.choice(p)
-    return n
+def game_over():
+    # intro_text = ["GAME OVER", "Для того, чтобы начать с начала,", " нажмите любую клавишу"]
+    intro_text = ["GAME OVER"]
+    # fon = pygame.transform.scale(screen, (WIDTH, HEIGHT))
+    # screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 50)
+    text_coord = WIDTH // 2
+    for line in intro_text:
+        string_rendered = font.render(line, 1, pygame.Color('black'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            '''elif event.type == pygame.KEYDOWN or \
+                    event.type == pygame.MOUSEBUTTONDOWN:
+                return  # начинаем игру'''
+        pygame.display.flip()
+        clock.tick(FPS)
 
 
 def terminate():
@@ -72,7 +92,7 @@ def terminate():
 
 
 def generate_level(level):
-    new_player, x, y = None, None, None
+    player_, x, y = None, None, None
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '@':
@@ -80,14 +100,15 @@ def generate_level(level):
             elif level[y][x] == '#':
                 Tile('wall', x, y)
             elif level[y][x] == '-':
-                Tile('poison', x, y)
+                Tile('poison', x, y).add(danger)
             elif level[y][x] == '&':
                 Tile('piece_ground', x, y)
             elif level[y][x] == 'h':
-                new_player = Girls(0.1, x, y + 1)
+                Tile('piece_ground', x, y)
+                player_ = Girls(0.1, x, y)
     # вернем игрока, а также размер поля в клетках
 
-    return new_player, x + 1, y + 1
+    return player_, x + 1, y + 1
 
 
 class Tile(pygame.sprite.Sprite):
@@ -96,25 +117,6 @@ class Tile(pygame.sprite.Sprite):
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
-
-
-class Girls(pygame.sprite.Sprite):
-    def __init__(self, v, x, y, *group):
-        super().__init__(*group)
-        self.v, self.x, self.y = v, x, y - 10
-        self.girl = AnimatedSprite(load_image("girlr.png", -1), 3, 1, x * tile_width,
-                                   y * tile_height)
-        self.rect = self.girl.rect
-        all_sprites.add(self.girl)
-
-    def update(self):
-        # print(pygame.sprite.spritecollideany(self, tiles_group))
-        if pygame.sprite.spritecollideany(self, tiles_group):
-            self.girl.rect.x += clock.tick(FPS) * self.v
-            if pygame.key.get_pressed()[pygame.K_RIGHT]:
-                self.girl.rect.x += 10
-            if pygame.key.get_pressed()[pygame.K_UP]:
-                self.girl.rect.y -= 10
 
 
 class AnimatedSprite(pygame.sprite.Sprite):
@@ -138,6 +140,55 @@ class AnimatedSprite(pygame.sprite.Sprite):
         self.image = self.frames[self.cur_frame]
 
 
+class Girls(AnimatedSprite):
+    def __init__(self, v, x, y):
+        super().__init__(load_image("girlr.png", -1), 3, 1, x * tile_width, y * tile_height)
+        self.v, self.x, self.y = v, x, y
+        player_group.add(self)
+
+    def update2(self):
+        # if print(pygame.sprite.spritecollideany(self, tiles_group)):
+        self.rect.y += tile_height
+        if pygame.sprite.spritecollideany(self, tiles_group):
+            if pygame.sprite.spritecollideany(self, danger):
+                print('game over')
+                self.rect.y += tile_height
+                game_over()
+            self.rect.x += clock.tick(FPS) * self.v
+            if pygame.key.get_pressed()[pygame.K_RIGHT]:
+                self.rect.x += tile_width
+            if pygame.key.get_pressed()[pygame.K_UP]:
+                self.rect.y -= tile_height * 2
+            if pygame.key.get_pressed()[pygame.K_LEFT]:
+                self.rect.x -= tile_width
+            self.rect.y -= tile_height
+
+
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+        obj.rect.x %= (level_x * tile_width)
+        obj.rect.y %= (level_y * tile_height)
+
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        # self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
+
+
+def init():
+    field = load_level('map.txt')
+    player, level_x, level_y = generate_level(field)
+    return field, player, level_x, level_y
+
+
 if __name__ == "__main__":
     time = pygame.time.Clock
     running = True
@@ -146,26 +197,21 @@ if __name__ == "__main__":
     sky = load_image('landscape.jpg')
     field = load_level('map.txt')
     player, level_x, level_y = generate_level(field)
-    # camera = Camera()
-    # hero = Girls(30, )
-    money = AnimatedSprite(load_image("money1.jpg", -1), 7, 2, 50, 50)
+    camera = Camera()
     while running:
         screen.blit(sky, (0, 0))
-        # screen.fill('black')
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
                 terminate()
 
-        # изменяем ракурс камеры
-        # player.update()
-        # camera.update(player)
+        camera.update(player)
         # обновляем положение всех спрайтов
-        # for sprite in all_sprites:
-        # camera.apply(sprite)
+        for sprite in all_sprites:
+            camera.apply(sprite)
 
+        player.update2()
         all_sprites.update()
-        player.update()
         all_sprites.draw(screen)
         player_group.draw(screen)
         pygame.display.flip()
