@@ -1,7 +1,8 @@
 import os
 import sys
-import random
 import pygame
+
+# import pygame_gui
 
 pygame.init()
 FPS = 10
@@ -79,9 +80,10 @@ def game_over():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            '''elif event.type == pygame.KEYDOWN or \
+            elif event.type == pygame.KEYDOWN or \
                     event.type == pygame.MOUSEBUTTONDOWN:
-                return  # начинаем игру'''
+                init()
+                return  # начинаем игру
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -184,26 +186,70 @@ class Camera:
 
 
 def init():
-    field = load_level('map.txt')
+    global player
+    # screen.fill((0, 0, 0))
+    for el in all_sprites:
+        el.kill()
+    camera.dx, camera.dy = 0, 0
+    # player.x, player.y, player.v = 0, 0, 1
     player, level_x, level_y = generate_level(field)
-    return field, player, level_x, level_y
+    # camera.apply(player)
+    # camera.update(player)
+
+
+def start_screen():
+    pygame.mixer.music.load('music.mp3')
+    pygame.mixer.music.play(-1)
+    intro_text = ["Девушка в пустыне", "",
+                  "Найди сундук сокровищами, но следи за осташимся количество воды.",
+                  "Для выключения музыки нажми - 1, для вклячения - 2"]
+
+    # fon = pygame.transform.scale(load_image('fon.jpg'), (WIDTH, HEIGHT))
+    screen.blit(sky, (0, 0))
+    font = pygame.font.Font(None, 30)
+    text_coord = 50
+    for line in intro_text:
+        string_rendered = font.render(line, 1, pygame.Color('black'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or \
+                    event.type == pygame.MOUSEBUTTONDOWN:
+                return  # начинаем игру
+        pygame.display.flip()
+        clock.tick(FPS)
 
 
 if __name__ == "__main__":
     time = pygame.time.Clock
     running = True
-    # start_screen()
     # field = load_level('map_3.txt')  # (input('Введите название файла с уровнем '))
     sky = load_image('landscape.jpg')
+    start_screen()
     field = load_level('map.txt')
     player, level_x, level_y = generate_level(field)
     camera = Camera()
+    pygame.mixer.music.set_volume(0.5)
     while running:
         screen.blit(sky, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
                 terminate()
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_1:
+                    pygame.mixer.music.pause()
+                    # pygame.mixer.music.stop()
+                elif event.key == pygame.K_2:
+                    pygame.mixer.music.unpause()
 
         camera.update(player)
         # обновляем положение всех спрайтов
