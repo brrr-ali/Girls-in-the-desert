@@ -74,16 +74,26 @@ def game_over():
         intro_rect.x = 10
         text_coord += intro_rect.height
         screen.blit(string_rendered, intro_rect)
-
+    fl = 0
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif (event.type == pygame.KEYDOWN and event.key != pygame.K_1 and
-                  event.key != pygame.K_2) or \
-                    event.type == pygame.MOUSEBUTTONDOWN:
-
-                init()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    pygame.mixer.music.pause()
+                elif event.key == pygame.K_2:
+                    pygame.mixer.music.unpause()
+                else:
+                    fl = 1
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                fl = 1
+            if fl:
+                global player
+                for el in all_sprites:
+                    el.kill()
+                camera.dx, camera.dy, camera.fl = 0, 0, 0
+                player, level_x, level_y = generate_level(field)
                 return  # начинаем игру1
         pygame.display.flip()
         clock.tick(FPS)
@@ -110,7 +120,6 @@ def generate_level(level):
                 Tile('piece_ground', x, y)
                 player_ = Girls(0.1, x, y)
     # вернем игрока, а также размер поля в клетках
-
     return player_, x + 1, y + 1
 
 
@@ -161,9 +170,11 @@ class Girls(AnimatedSprite):
                 self.rect.x += tile_width
             if pygame.key.get_pressed()[pygame.K_UP]:
                 self.rect.y -= tile_height * 2
-            if pygame.key.get_pressed()[pygame.K_LEFT]:
-                self.rect.x -= tile_width
+            '''if pygame.key.get_pressed()[pygame.K_LEFT]:
+                self.rect.x -= tile_width'''
             self.rect.y -= tile_height
+        if self.rect.y >= HEIGHT:
+            game_over()
 
 
 class Camera:
@@ -171,36 +182,19 @@ class Camera:
     def __init__(self):
         self.dx = 0
         self.dy = 0
+        self.fl = 0
 
     # сдвинуть объект obj на смещение камеры
     def apply(self, obj):
         obj.rect.x += self.dx
         obj.rect.y += self.dy
-        '''if 0 <= obj.rect.x < WIDTH:
-            obj.rect.x %= (level_x * tile_width)
-        if 0 <= obj.rect.y < HEIGHT:
-            obj.rect.y %= (level_y * tile_height)'''
-        # obj.rect.y %= (level_y * tile_height)
 
     # позиционировать камеру на объекте target
     def update(self, target):
-        if not(0 <= target.rect.x < WIDTH):
+        if not (0 <= target.rect.x < WIDTH // 2):
+            self.fl = 1
+        if self.fl:
             self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
-        if not(0 <= target.rect.y < HEIGHT):
-            print(target.rect.y + target.rect.h // 2 - HEIGHT // 2, target.rect.y)
-            self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
-
-
-def init():
-    global player
-    # screen.fill((0, 0, 0))
-    for el in all_sprites:
-        el.kill()
-    camera.dx, camera.dy = 0, 0
-    # player.x, player.y, player.v = 0, 0, 1
-    player, level_x, level_y = generate_level(field)
-    # camera.apply(player)
-    # camera.update(player)
 
 
 def start_screen():
@@ -234,18 +228,23 @@ def start_screen():
                 terminate()
             elif event.type == pygame.KEYDOWN or \
                     event.type == pygame.MOUSEBUTTONDOWN:
-                return  # начинаем игру
+                if event.key == pygame.K_1:
+                    pygame.mixer.music.pause()
+                elif event.key == pygame.K_2:
+                    pygame.mixer.music.unpause()
+                else:
+                    return  # начинаем игру
         pygame.display.flip()
         clock.tick(FPS)
 
 
 if __name__ == "__main__":
-    remaining_time = 10
-
+    remaining_time = 0
+    level = 1
+    time_in_level = [5, 10, 10, 10, 10]
     manager = pygame_gui.UIManager((800, 600))
     time = pygame.time.Clock
     running = True
-    # field = load_level('map_3.txt')  # (input('Введите название файла с уровнем '))
     sky = load_image('landscape.jpg')
     start_screen()
     field = load_level('map.txt')
@@ -253,7 +252,6 @@ if __name__ == "__main__":
     camera = Camera()
     pygame.mixer.music.set_volume(0.5)
     while running:
-
         screen.blit(sky, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -262,11 +260,9 @@ if __name__ == "__main__":
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_1:
                     pygame.mixer.music.pause()
-                    # pygame.mixer.music.stop()
                 elif event.key == pygame.K_2:
                     pygame.mixer.music.unpause()
             # manager.process_events(event)
-
         camera.update(player)
         # обновляем положение всех спрайтов
         for sprite in all_sprites:
@@ -279,5 +275,10 @@ if __name__ == "__main__":
         '''manager.update(t)
         manager.draw_ui(screen)'''
         pygame.display.flip()
-        # print(clock.
+        remaining_time += t
+
+        if remaining_time >= time_in_level[level - 1] * 1000:
+            remaining_time = 0
+            screen.blit(sky, (0, 0))
+            game_over()
     pygame.quit()
