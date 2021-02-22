@@ -1,8 +1,7 @@
 import os
 import sys
 import pygame
-
-# import pygame_gui
+import pygame_gui
 
 pygame.init()
 FPS = 10
@@ -80,10 +79,12 @@ def game_over():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or \
+            elif (event.type == pygame.KEYDOWN and event.key != pygame.K_1 and
+                  event.key != pygame.K_2) or \
                     event.type == pygame.MOUSEBUTTONDOWN:
+
                 init()
-                return  # начинаем игру
+                return  # начинаем игру1
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -149,7 +150,6 @@ class Girls(AnimatedSprite):
         player_group.add(self)
 
     def update2(self):
-        # if print(pygame.sprite.spritecollideany(self, tiles_group)):
         self.rect.y += tile_height
         if pygame.sprite.spritecollideany(self, tiles_group):
             if pygame.sprite.spritecollideany(self, danger):
@@ -176,13 +176,19 @@ class Camera:
     def apply(self, obj):
         obj.rect.x += self.dx
         obj.rect.y += self.dy
-        obj.rect.x %= (level_x * tile_width)
-        obj.rect.y %= (level_y * tile_height)
+        '''if 0 <= obj.rect.x < WIDTH:
+            obj.rect.x %= (level_x * tile_width)
+        if 0 <= obj.rect.y < HEIGHT:
+            obj.rect.y %= (level_y * tile_height)'''
+        # obj.rect.y %= (level_y * tile_height)
 
     # позиционировать камеру на объекте target
     def update(self, target):
-        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
-        # self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
+        if not(0 <= target.rect.x < WIDTH):
+            self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        if not(0 <= target.rect.y < HEIGHT):
+            print(target.rect.y + target.rect.h // 2 - HEIGHT // 2, target.rect.y)
+            self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
 
 
 def init():
@@ -198,12 +204,17 @@ def init():
 
 
 def start_screen():
+    pygame.mixer.init()
     pygame.mixer.music.load('music.mp3')
     pygame.mixer.music.play(-1)
     intro_text = ["Девушка в пустыне", "",
                   "Найди сундук сокровищами, но следи за осташимся количество воды.",
-                  "Для выключения музыки нажми - 1, для вклячения - 2"]
-
+                  "Для выключения музыки нажми - 1, для включения - 2"]
+    '''text = pygame_gui.elements.ui_text_box.UITextBox('\n'.join(intro_text),
+                                                     relative_rect=pygame.Rect((100, 100),
+                                                                               (300, 100)),
+                                                     manager=manager)
+    text.set_active_effect(pygame_gui.TEXT_EFFECT_TYPING_APPEAR)'''
     # fon = pygame.transform.scale(load_image('fon.jpg'), (WIDTH, HEIGHT))
     screen.blit(sky, (0, 0))
     font = pygame.font.Font(None, 30)
@@ -229,6 +240,9 @@ def start_screen():
 
 
 if __name__ == "__main__":
+    remaining_time = 10
+
+    manager = pygame_gui.UIManager((800, 600))
     time = pygame.time.Clock
     running = True
     # field = load_level('map_3.txt')  # (input('Введите название файла с уровнем '))
@@ -239,6 +253,7 @@ if __name__ == "__main__":
     camera = Camera()
     pygame.mixer.music.set_volume(0.5)
     while running:
+
         screen.blit(sky, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -250,16 +265,19 @@ if __name__ == "__main__":
                     # pygame.mixer.music.stop()
                 elif event.key == pygame.K_2:
                     pygame.mixer.music.unpause()
+            # manager.process_events(event)
 
         camera.update(player)
         # обновляем положение всех спрайтов
         for sprite in all_sprites:
             camera.apply(sprite)
-
         player.update2()
         all_sprites.update()
         all_sprites.draw(screen)
         player_group.draw(screen)
+        t = clock.tick(FPS)
+        '''manager.update(t)
+        manager.draw_ui(screen)'''
         pygame.display.flip()
-        clock.tick(FPS)
+        # print(clock.
     pygame.quit()
