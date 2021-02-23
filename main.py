@@ -124,17 +124,18 @@ class Girls(AnimatedSprite):
         self.bottles_of_water = 3
 
     def update2(self):
-        self.rect.y += tile_height
         if pygame.sprite.spritecollideany(self, tiles_group):
-            if pygame.sprite.spritecollideany(self, danger):
-                self.rect.y += tile_height
-                game.game_over()
             if pygame.sprite.spritecollideany(self, bottle):
                 self.bottles_of_water += 1
                 game.remaining_time -= 2000
                 pygame.sprite.spritecollideany(self, bottle).kill()
             if pygame.sprite.spritecollideany(self, chest):
                 game.win()
+        self.rect.y += tile_height
+        if pygame.sprite.spritecollideany(self, tiles_group):
+            if pygame.sprite.spritecollideany(self, danger):
+                self.rect.y += tile_height
+                game.game_over()
             self.rect.x += clock.tick(FPS) * self.v
             if pygame.key.get_pressed()[pygame.K_RIGHT]:
                 self.rect.x += tile_width
@@ -167,7 +168,7 @@ class Camera:
 
 def start_screen():
     pygame.mixer.init()
-    pygame.mixer.music.load('music.mp3')
+    pygame.mixer.music.load('music2.mp3')
     pygame.mixer.music.play(-1)
     game.new_play(["Девушка в пустыне", "",
                    "Найди сундук сокровищами, но следи за осташимся количество воды.",
