@@ -6,7 +6,7 @@ pygame.init()
 FPS = 10
 WIDTH = 800
 HEIGHT = 600
-MYEVENTTYPE = pygame.USEREVENT + 1
+THIRSTY = pygame.USEREVENT + 1
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 LEVEL_MAPS = {1: 'map.txt', 2: 'map_2.txt', 3: 'map_3.txt', 4: 'map_4.txt', 5: 'map_5.txt'}
@@ -250,14 +250,14 @@ if __name__ == "__main__":
     game = Game(1)
     start_screen()
     pygame.mixer.music.set_volume(0.5)
-    pygame.time.set_timer(MYEVENTTYPE, 2000)
+    pygame.time.set_timer(THIRSTY, 2000)
     while running:
         screen.blit(sky, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
                 terminate()
-            elif event.type == MYEVENTTYPE:
+            elif event.type == THIRSTY:
                 game.hero.bottles_of_water -= 1
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_1:
