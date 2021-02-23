@@ -4,13 +4,12 @@ import pygame
 
 pygame.init()
 FPS = 10
-level_x, level_y = 16, 12
 WIDTH = 800
 HEIGHT = 600
 MYEVENTTYPE = pygame.USEREVENT + 1
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-
+LEVEL_MAPS = {1: 'map.txt', 2: 'map_2.txt', 3: 'map_3.txt', 4: 'map_4.txt', 5: 'map_5.txt'}
 TIME_IN_LEVEl = [5, 10, 10, 10, 10]
 
 
@@ -32,19 +31,18 @@ def load_image(name, colorkey=None):
 
 
 tile_images = {
-    'wall': load_image('лестницввправо.png', -1),
-    'empty': load_image('лесенкавлево.png', -1),
     'bottle_of_water': load_image('bottle.png', -1),
     'piece_ground': load_image('кусокземли.png', -1),
-    'poison': load_image('poison.png', -1)
+    'poison': load_image('poison.png', -1),
+    'chest': load_image('chest.png', -1),
 }
-player_image = load_image('лесенкавлево.png')
 tile_width = tile_height = 50
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 danger = pygame.sprite.Group()
 bottle = pygame.sprite.Group()
+chest = pygame.sprite.Group()
 
 
 def load_level(filename):
@@ -83,8 +81,8 @@ def generate_level(level):
             elif level[y][x] == 'h':
                 Tile('piece_ground', x, y)
                 player_ = Girls(0.1, x, y)
-            elif level[y][x] == 'w':
-                pass
+            elif level[y][x] == 'c':
+                Tile('chest', x, y).add(chest)
     # вернем игрока, а также размер поля в клетках
     return player_, x + 1, y + 1
 
@@ -129,19 +127,19 @@ class Girls(AnimatedSprite):
         self.rect.y += tile_height
         if pygame.sprite.spritecollideany(self, tiles_group):
             if pygame.sprite.spritecollideany(self, danger):
-                print('game over')
                 self.rect.y += tile_height
                 game.game_over()
             if pygame.sprite.spritecollideany(self, bottle):
                 self.bottles_of_water += 1
                 game.remaining_time -= 2000
+                pygame.sprite.spritecollideany(self, bottle).kill()
+            if pygame.sprite.spritecollideany(self, chest):
+                game.win()
             self.rect.x += clock.tick(FPS) * self.v
             if pygame.key.get_pressed()[pygame.K_RIGHT]:
                 self.rect.x += tile_width
             if pygame.key.get_pressed()[pygame.K_UP]:
                 self.rect.y -= tile_height * 2
-            '''if pygame.key.get_pressed()[pygame.K_LEFT]:
-                self.rect.x -= tile_width'''
             self.rect.y -= tile_height
         if self.rect.y >= HEIGHT:
             game.game_over()
@@ -171,42 +169,16 @@ def start_screen():
     pygame.mixer.init()
     pygame.mixer.music.load('music.mp3')
     pygame.mixer.music.play(-1)
-    intro_text = ["Девушка в пустыне", "",
-                  "Найди сундук сокровищами, но следи за осташимся количество воды.",
-                  "Для выключения музыки нажми - 1, для включения - 2"]
-    screen.blit(sky, (0, 0))
-    font = pygame.font.Font(None, 30)
-    text_coord = 50
-    for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color('black'))
-        intro_rect = string_rendered.get_rect()
-        text_coord += 10
-        intro_rect.top = text_coord
-        intro_rect.x = 10
-        text_coord += intro_rect.height
-        screen.blit(string_rendered, intro_rect)
-
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-            elif event.type == pygame.KEYDOWN or \
-                    event.type == pygame.MOUSEBUTTONDOWN:
-                if event.key == pygame.K_1:
-                    pygame.mixer.music.pause()
-                elif event.key == pygame.K_2:
-                    pygame.mixer.music.unpause()
-                else:
-                    return  # начинаем игру
-        pygame.display.flip()
-        clock.tick(FPS)
+    game.new_play(["Девушка в пустыне", "",
+                   "Найди сундук сокровищами, но следи за осташимся количество воды.",
+                   "Для выключения музыки нажми - 1, для включения - 2"],
+                  pygame.font.Font(None, 30))
 
 
 class Game:
-    def __init__(self, screen, level, hero, level_x, level_y):
-        self.hero = hero
-        self.screen = screen
-        self.level, self.level_x, self.level_y = level, level_x, level_y
+    def __init__(self, level):
+        self.hero, self.level_x, self.level_y = generate_level(load_level(LEVEL_MAPS[level]))
+        self.level = level
         self.remaining_time = 0
         self.camera = Camera()
 
@@ -221,21 +193,23 @@ class Game:
         player_group.draw(screen)
         t = clock.tick(FPS)
         self.remaining_time += t
-        if self.remaining_time >= TIME_IN_LEVEl[level - 1] * 1000:
+        if self.remaining_time >= TIME_IN_LEVEl[self.level - 1] * 1000:
             self.remaining_time = 0
             self.game_over()
         if self.hero.bottles_of_water < 0:
             self.game_over()
-        print(self.hero.bottles_of_water)
         pygame.display.flip()
 
+    def win(self):
+        self.level += 1
+        self.new_play(['YOU WIN!'], pygame.font.Font(None, 50))
+
     def game_over(self):
+        self.new_play(['GAME OVER'], pygame.font.Font(None, 50))
+
+    def new_play(self, intro_text, font):
         screen.blit(sky, (0, 0))
-        intro_text = ["GAME OVER"]
-        # fon = pygame.transform.scale(screen, (WIDTH, HEIGHT))
-        # screen.blit(fon, (0, 0))
-        font = pygame.font.Font(None, 50)
-        text_coord = WIDTH // 2
+        text_coord = 10
         for line in intro_text:
             string_rendered = font.render(line, 1, pygame.Color('black'))
             intro_rect = string_rendered.get_rect()
@@ -261,23 +235,19 @@ class Game:
                 if fl:
                     for el in all_sprites:
                         el.kill()
-                    self.hero.bottles_of_water = 3
-                    self.camera.dx, self.camera.dy, self.camera.fl = 0, 0, 0
-                    self.hero, self.level_x, self.level_y = generate_level(field)
-                    return  # начинаем игру1
+                    self.__init__(self.level)
+                    return  # начинаем игру
             pygame.display.flip()
             clock.tick(FPS)
 
 
 if __name__ == "__main__":
     remaining_time = 0
-    level = 1
     time = pygame.time.Clock
     running = True
     sky = load_image('landscape.jpg')
+    game = Game(1)
     start_screen()
-    field = load_level('map.txt')
-    game = Game(screen, level, *generate_level(field))
     pygame.mixer.music.set_volume(0.5)
     pygame.time.set_timer(MYEVENTTYPE, 2000)
     while running:
