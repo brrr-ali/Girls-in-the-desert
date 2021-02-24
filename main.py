@@ -1,5 +1,6 @@
 import os
 # import random
+import random
 import sys
 import pygame
 
@@ -154,23 +155,6 @@ class Girl(AnimatedSprite):
         if self.rect.y >= HEIGHT:
             game.game_over(['Вы упали в пропасть.', 'В следущий раз будте внимательней.'])
 
-            '''if pygame.sprite.spritecollideany(self, tiles_group):
-                if pygame.key.get_pressed()[pygame.K_RIGHT]:
-                    self.rect.x += tile_width
-                if pygame.key.get_pressed()[pygame.K_UP]:1
-                    self.rect.y -= tile_height * 2
-                self.rect.x += tile_width * self.v
-            if self.rect.y >= HEIGHT:
-                game.game_over()
-            if pygame.sprite.spritecollideany(self, chest):
-                game.win()
-            if pygame.sprite.spritecollideany(self, danger):
-                game.game_over()
-            if pygame.sprite.spritecollideany(self, bottles):
-                self.bottles_of_water += 1
-                game.remaining_time -= 2000
-                pygame.sprite.spritecollideany(self, bottles).kill()'''
-
 
 class Camera:
     # зададим начальный сдвиг камеры
@@ -202,9 +186,18 @@ def start_screen():
                   pygame.font.Font(None, 30))
 
 
-'''class Particle(pygame.sprite.Sprite):
+def create_particles(position):
+    # количество создаваемых частиц
+    particle_count = 20
+    # возможные скорости
+    numbers = range(-5, 6)
+    for _ in range(particle_count):
+        Particle(position, random.choice(numbers), random.choice(numbers))
+
+
+class Particle(pygame.sprite.Sprite):
     # сгенерируем частицы разного размера
-    fire = [load_image("star.png")]
+    fire = [load_image("bottle.png")]
     for scale in (5, 10, 20):
         fire.append(pygame.transform.scale(fire[0], (scale, scale)))
 
@@ -212,12 +205,10 @@ def start_screen():
         super().__init__(all_sprites)
         self.image = random.choice(self.fire)
         self.rect = self.image.get_rect()
-
         # у каждой частицы своя скорость — это вектор
         self.velocity = [dx, dy]
         # и свои координаты
         self.rect.x, self.rect.y = pos
-
         # гравитация будет одинаковой (значение константы)
         self.gravity = GRAVITY
 
@@ -231,7 +222,6 @@ def start_screen():
         # убиваем, если частица ушла за экран
         if not self.rect.colliderect((0, 0, WIDTH, HEIGHT)):
             self.kill()
-'''
 
 
 class Game:
@@ -261,10 +251,12 @@ class Game:
         self.new_play(['YOU WIN!'], pygame.font.Font(None, 50))
 
     def game_over(self, reason):
+        create_particles((self.hero.x, self.hero.y))
         self.new_play(['GAME OVER', *reason], pygame.font.Font(None, 50))
 
     def new_play(self, intro_text, font):
         screen.blit(sky, (0, 0))
+        create_particles((200, 200))
         text_coord = 10
         for line in intro_text:
             string_rendered = font.render(line, 1, pygame.Color('black'))
@@ -282,6 +274,7 @@ class Game:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_1:
                         pygame.mixer.music.pause()
+                        create_particles((200, 200))
                     elif event.key == pygame.K_2:
                         pygame.mixer.music.unpause()
                     else:
@@ -306,6 +299,7 @@ if __name__ == "__main__":
     start_screen()
     pygame.mixer.music.set_volume(0.5)
     pygame.time.set_timer(THIRSTY, 2000)
+
     while running:
         screen.blit(sky, (0, 0))
         for event in pygame.event.get():
