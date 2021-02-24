@@ -1,16 +1,18 @@
 import os
+import random
 import sys
 import pygame
 
 pygame.init()
-FPS = 10
+FPS = 30
 WIDTH = 800
 HEIGHT = 600
 THIRSTY = pygame.USEREVENT + 1
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-LEVEL_MAPS = {1: 'map.txt', 2: 'map_2.txt', 3: 'map_3.txt', 4: 'map_4.txt', 5: 'map_5.txt'}
+LEVEL_MAPS = {1: 'map.txt', 2: 'map2.txt', 3: 'map3.txt', 4: 'map4.txt', 5: 'map5.txt'}
 TIME_IN_LEVEl = [5, 10, 10, 10, 10]
+GRAVITY = 0.2
 
 
 def load_image(name, colorkey=None):
@@ -41,7 +43,7 @@ all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 danger = pygame.sprite.Group()
-bottle = pygame.sprite.Group()
+bottles = pygame.sprite.Group()
 chest = pygame.sprite.Group()
 
 
@@ -71,7 +73,7 @@ def generate_level(level):
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == 'w':
-                bottle.add(Tile('bottle_of_water', x, y))
+                bottles.add(Tile('bottle_of_water', x, y))
             elif level[y][x] == '#':
                 Tile('wall', x, y)
             elif level[y][x] == '-':
@@ -80,7 +82,7 @@ def generate_level(level):
                 Tile('piece_ground', x, y)
             elif level[y][x] == 'h':
                 Tile('piece_ground', x, y)
-                player_ = Girls(0.1, x, y)
+                player_ = Girl(x, y - 1)
             elif level[y][x] == 'c':
                 Tile('chest', x, y).add(chest)
     # вернем игрока, а также размер поля в клетках
@@ -116,19 +118,20 @@ class AnimatedSprite(pygame.sprite.Sprite):
         self.image = self.frames[self.cur_frame]
 
 
-class Girls(AnimatedSprite):
-    def __init__(self, v, x, y):
+class Girl(AnimatedSprite):
+    def __init__(self, x, y):
         super().__init__(load_image("girlr.png", -1), 3, 1, x * tile_width, y * tile_height)
-        self.v, self.x, self.y = v, x, y
+        self.v, self.x, self.y = 0.1, x, y
         player_group.add(self)
         self.bottles_of_water = 3
 
-    def update2(self):
+    def update(self):
+        super().update()
         if pygame.sprite.spritecollideany(self, tiles_group):
-            if pygame.sprite.spritecollideany(self, bottle):
+            if pygame.sprite.spritecollideany(self, bottles):
                 self.bottles_of_water += 1
                 game.remaining_time -= 2000
-                pygame.sprite.spritecollideany(self, bottle).kill()
+                pygame.sprite.spritecollideany(self, bottles).kill()
             if pygame.sprite.spritecollideany(self, chest):
                 game.win()
         self.rect.y += tile_height
@@ -144,6 +147,23 @@ class Girls(AnimatedSprite):
             self.rect.y -= tile_height
         if self.rect.y >= HEIGHT:
             game.game_over()
+
+        '''if pygame.sprite.spritecollideany(self, tiles_group):
+            if pygame.key.get_pressed()[pygame.K_RIGHT]:
+                self.rect.x += tile_width
+            if pygame.key.get_pressed()[pygame.K_UP]:1
+                self.rect.y -= tile_height * 2
+            self.rect.x += tile_width * self.v
+        if self.rect.y >= HEIGHT:
+            game.game_over()
+        if pygame.sprite.spritecollideany(self, chest):
+            game.win()
+        if pygame.sprite.spritecollideany(self, danger):
+            game.game_over()
+        if pygame.sprite.spritecollideany(self, bottles):
+            self.bottles_of_water += 1
+            game.remaining_time -= 2000
+            pygame.sprite.spritecollideany(self, bottles).kill()'''
 
 
 class Camera:
@@ -176,6 +196,37 @@ def start_screen():
                   pygame.font.Font(None, 30))
 
 
+class Particle(pygame.sprite.Sprite):
+    # сгенерируем частицы разного размера
+    fire = [load_image("star.png")]
+    for scale in (5, 10, 20):
+        fire.append(pygame.transform.scale(fire[0], (scale, scale)))
+
+    def __init__(self, pos, dx, dy):
+        super().__init__(all_sprites)
+        self.image = random.choice(self.fire)
+        self.rect = self.image.get_rect()
+
+        # у каждой частицы своя скорость — это вектор
+        self.velocity = [dx, dy]
+        # и свои координаты
+        self.rect.x, self.rect.y = pos
+
+        # гравитация будет одинаковой (значение константы)
+        self.gravity = GRAVITY
+
+    def update(self):
+        # применяем гравитационный эффект:
+        # движение с ускорением под действием гравитации
+        self.velocity[1] += self.gravity
+        # перемещаем частицу
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        # убиваем, если частица ушла за экран
+        if not self.rect.colliderect((0, 0, WIDTH, HEIGHT)):
+            self.kill()
+
+
 class Game:
     def __init__(self, level):
         self.hero, self.level_x, self.level_y = generate_level(load_level(LEVEL_MAPS[level]))
@@ -188,7 +239,6 @@ class Game:
         # обновляем положение всех спрайтов
         for sprite in all_sprites:
             self.camera.apply(sprite)
-        self.hero.update2()
         all_sprites.update()
         all_sprites.draw(screen)
         player_group.draw(screen)
