@@ -121,7 +121,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
 class Girl(AnimatedSprite):
     def __init__(self, x, y):
         super().__init__(load_image("girlr.png", -1), 3, 1, x * tile_width, y * tile_height)
-        self.v, self.x, self.y = 0.1, x, y
+        self.v, self.x, self.y = 0.08, x, y
         player_group.add(self)
         self.bottles_of_water = 3
 
@@ -236,7 +236,10 @@ def start_screen():
 
 class Game:
     def __init__(self, level):
-        self.hero, self.level_x, self.level_y = generate_level(load_level(LEVEL_MAPS[level]))
+        if level in LEVEL_MAPS:
+            self.hero, self.level_x, self.level_y = generate_level(load_level(LEVEL_MAPS[level]))
+        else:
+            self.win('Вы прошли все уровни.', 'Поздравляем с победой!')
         self.level = level
         self.remaining_time = 0
         self.camera = Camera()
@@ -260,9 +263,9 @@ class Game:
             self.game_over(['У вас закончилась вода'])
         pygame.display.flip()
 
-    def win(self):
+    def win(self, *text):
         self.level += 1
-        self.new_play(['YOU WIN!'], pygame.font.Font(None, 50))
+        self.new_play(['YOU WIN!', *text], pygame.font.Font(None, 50))
 
     def game_over(self, reason):
         self.new_play(['GAME OVER', *reason], pygame.font.Font(None, 50))
