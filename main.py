@@ -141,7 +141,7 @@ class Girl(AnimatedSprite):
                 game.game_over()
             self.rect.x += clock.tick(FPS) * self.v
             if pygame.key.get_pressed()[pygame.K_RIGHT]:
-                self.rect.x += tile_width
+                self.rect.x += tile_width*1.2
             if pygame.key.get_pressed()[pygame.K_UP]:
                 self.rect.y -= tile_height * 2
             self.rect.y -= tile_height
@@ -196,7 +196,7 @@ def start_screen():
                   pygame.font.Font(None, 30))
 
 
-class Particle(pygame.sprite.Sprite):
+'''class Particle(pygame.sprite.Sprite):
     # сгенерируем частицы разного размера
     fire = [load_image("star.png")]
     for scale in (5, 10, 20):
@@ -224,7 +224,7 @@ class Particle(pygame.sprite.Sprite):
         self.rect.y += self.velocity[1]
         # убиваем, если частица ушла за экран
         if not self.rect.colliderect((0, 0, WIDTH, HEIGHT)):
-            self.kill()
+            self.kill()'''
 
 
 class Game:
@@ -237,6 +237,10 @@ class Game:
     def update(self):
         self.camera.update(self.hero)
         # обновляем положение всех спрайтов
+        Tile('bottle_of_water', 0, 0)
+        font = pygame.font.Font(None, 50)
+        text = font.render(str(self.hero.bottles_of_water), True, (0, 0, 0))
+        screen.blit(text, (30, 20))
         for sprite in all_sprites:
             self.camera.apply(sprite)
         all_sprites.update()
