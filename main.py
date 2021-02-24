@@ -46,6 +46,7 @@ player_group = pygame.sprite.Group()
 danger = pygame.sprite.Group()
 bottles = pygame.sprite.Group()
 chest = pygame.sprite.Group()
+particles = pygame.sprite.Group()
 
 
 def load_level(filename):
@@ -192,7 +193,7 @@ def create_particles(position):
     # возможные скорости
     numbers = range(-5, 6)
     for _ in range(particle_count):
-        Particle(position, random.choice(numbers), random.choice(numbers))
+        Particle(position, random.choice(numbers), random.choice(numbers)).add(particles)
 
 
 class Particle(pygame.sprite.Sprite):
@@ -248,33 +249,33 @@ class Game:
 
     def win(self):
         self.level += 1
+        create_particles((200, 200))
         self.new_play(['YOU WIN!'], pygame.font.Font(None, 50))
 
     def game_over(self, reason):
-        create_particles((self.hero.x, self.hero.y))
         self.new_play(['GAME OVER', *reason], pygame.font.Font(None, 50))
 
     def new_play(self, intro_text, font):
-        screen.blit(sky, (0, 0))
-        create_particles((200, 200))
-        text_coord = 10
-        for line in intro_text:
-            string_rendered = font.render(line, 1, pygame.Color('black'))
-            intro_rect = string_rendered.get_rect()
-            text_coord += 10
-            intro_rect.top = text_coord
-            intro_rect.x = 10
-            text_coord += intro_rect.height
-            screen.blit(string_rendered, intro_rect)
-        fl = 0
         while True:
+            screen.blit(sky, (0, 0))
+            text_coord = 10
+            for line in intro_text:
+                string_rendered = font.render(line, 1, pygame.Color('black'))
+                intro_rect = string_rendered.get_rect()
+                text_coord += 10
+                intro_rect.top = text_coord
+                intro_rect.x = 10
+                text_coord += intro_rect.height
+                screen.blit(string_rendered, intro_rect)
+            fl = 0
+            particles.update()
+            particles.draw(screen)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_1:
                         pygame.mixer.music.pause()
-                        create_particles((200, 200))
                     elif event.key == pygame.K_2:
                         pygame.mixer.music.unpause()
                     else:
