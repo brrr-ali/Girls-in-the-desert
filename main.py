@@ -1,5 +1,4 @@
 import os
-# import random
 import random
 import sys
 import pygame
@@ -11,7 +10,7 @@ HEIGHT = 600
 THIRSTY = pygame.USEREVENT + 1
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-LEVEL_MAPS = {1: 'map3.txt', 2: 'map2.txt', 3: 'map3.txt', 4: 'map4.txt', 5: 'map5.txt'}
+LEVEL_MAPS = {1: 'map.txt', 2: 'map2.txt', 3: 'map3.txt', 4: 'map4.txt', 5: 'map5.txt'}
 TIME_IN_LEVEl = [5, 10, 10, 10, 10]
 GRAVITY = 0.2
 
@@ -146,6 +145,9 @@ class Girl(AnimatedSprite):
                 game.win()
             if pygame.sprite.spritecollideany(self, danger):
                 game.game_over(['Вы погибли при сражении с опасностью.'])
+            self.rect.x += tile_width * self.v
+            if pygame.key.get_pressed()[pygame.K_RIGHT]:
+                self.rect.x += tile_width * 1.5
             if pygame.key.get_pressed()[pygame.K_UP]:
                 self.rect.y -= tile_height * 2
             self.rect.y -= tile_height
@@ -231,7 +233,10 @@ class Particle(pygame.sprite.Sprite):
 
 class Game:
     def __init__(self, level):
-        self.hero, self.level_x, self.level_y = generate_level(load_level(LEVEL_MAPS[level]))
+        if level in LEVEL_MAPS:
+            self.hero, self.level_x, self.level_y = generate_level(load_level(LEVEL_MAPS[level]))
+        else:
+            self.win('Вы прошли все уровни.', 'Поздравляем с победой!')
         self.level = level
         self.remaining_time = 0
         self.camera = Camera()
@@ -239,6 +244,10 @@ class Game:
     def update(self):
         self.camera.update(self.hero)
         # обновляем положение всех спрайтов
+        Tile('bottle_of_water', 0, 0)
+        font = pygame.font.Font(None, 50)
+        text = font.render(str(self.hero.bottles_of_water), True, (0, 0, 0))
+        screen.blit(text, (30, 20))
         for sprite in all_sprites:
             self.camera.apply(sprite)
         all_sprites.update()
@@ -251,10 +260,10 @@ class Game:
             self.game_over(['У вас закончилась вода'])
         pygame.display.flip()
 
-    def win(self):
+    def win(self, *text):
         self.level += 1
         create_particles((200, 200))
-        self.new_play(['YOU WIN!'], pygame.font.Font(None, 50))
+        self.new_play(['YOU WIN!', *text], pygame.font.Font(None, 50))
 
     def game_over(self, reason):
         self.new_play(['GAME OVER', *reason], pygame.font.Font(None, 50))
