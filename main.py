@@ -145,14 +145,18 @@ class Girl(AnimatedSprite):
             if pygame.sprite.spritecollideany(self, chest):
                 game.win()
             if pygame.sprite.spritecollideany(self, danger):
-                # self.rect.y += tile_height
                 game.game_over(['Вы погибли при сражении с опасностью.'])
-            self.rect.x += tile_width * self.v
-            if pygame.key.get_pressed()[pygame.K_RIGHT]:
-                self.rect.x += tile_width * 1.5
             if pygame.key.get_pressed()[pygame.K_UP]:
                 self.rect.y -= tile_height * 2
             self.rect.y -= tile_height
+            if pygame.key.get_pressed()[pygame.K_RIGHT]:
+                for i in range(0, int(tile_width * 1.2), 20):
+                    self.rect.x += i
+                    if pygame.sprite.spritecollideany(self, bottles):
+                        self.bottles_of_water += 1
+                        game.remaining_time -= 2000
+                        pygame.sprite.spritecollideany(self, bottles).kill()
+            self.rect.x += tile_width * self.v
         if self.rect.y >= HEIGHT:
             game.game_over(['Вы упали в пропасть.', 'В следущий раз будте внимательней.'])
 
