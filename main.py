@@ -124,8 +124,8 @@ class AnimatedSprite(pygame.sprite.Sprite):
 
 class Enemy(AnimatedSprite):
     def __init__(self, x, y):
-        super().__init__(load_image("enemy_l.png", -1), 3, 1, x * tile_width, y * tile_height)
-        self.v, self.x, self.y = 0.09, x, y
+        super().__init__(load_image("enemy.png", -1), 3, 1, x * tile_width, y * tile_height)
+        self.v, self.x, self.y = 0.1, x, y
         enemy.add(self)
 
     def update(self):
@@ -273,8 +273,8 @@ class Game:
         for sprite in all_sprites:
             self.camera.apply(sprite)
         all_sprites.update()
-        enemy.draw(screen)
         all_sprites.draw(screen)
+        enemy.draw(screen)
         player_group.draw(screen)
         t = clock.tick(FPS)
         self.remaining_time += t
