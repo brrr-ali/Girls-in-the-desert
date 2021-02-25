@@ -264,7 +264,6 @@ class Game:
         self.camera = Camera()
 
     def update(self):
-        self.camera.update(self.hero)
         # обновляем положение всех спрайтов
         Tile('bottle_of_water', 0, 0)
         font = pygame.font.Font(None, 50)
@@ -282,6 +281,7 @@ class Game:
                 or self.hero.bottles_of_water < 0):
             self.game_over(['У вас закончилась вода'])
 
+        self.camera.update(self.hero)
         pygame.display.flip()
 
     def win(self, *text):
@@ -292,9 +292,13 @@ class Game:
     def game_over(self, reason):
         self.new_play(['GAME OVER', *reason], pygame.font.Font(None, 50))
 
+    def shop(self):
+        pass
+
     def new_play(self, intro_text, font):
         while True:
             screen.blit(sky, (0, 0))
+            screen.blit(shop_image, (650, 450))
             text_coord = 10
             for line in intro_text:
                 string_rendered = font.render(line, 1, pygame.Color('black'))
@@ -318,7 +322,12 @@ class Game:
                     else:
                         fl = 1
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    fl = 1
+                    if (shop_rect[0] <= event.pos[0] <= shop_rect[0] + shop_rect[2]
+                            and shop_rect[1] <= event.pos[1] <= shop_rect[1] + shop_rect[3]):
+                        print('В магазин!')
+                        self.shop()
+                    else:
+                        fl = 1
                 if fl:
                     for el in all_sprites:
                         el.kill()
@@ -333,6 +342,8 @@ if __name__ == "__main__":
     time = pygame.time.Clock
     running = True
     sky = load_image('landscape.jpg')
+    shop_image = load_image('shop.png', -1)
+    shop_rect = (*shop_image.get_size(), 650, 550)
     game = Game(1)
     start_screen()
     pygame.mixer.music.set_volume(0.5)
