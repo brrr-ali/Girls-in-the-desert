@@ -4,7 +4,7 @@ import sys
 import pygame
 
 pygame.init()
-FPS = 30
+FPS = 10
 WIDTH = 800
 HEIGHT = 600
 THIRSTY = pygame.USEREVENT + 1
@@ -45,6 +45,7 @@ player_group = pygame.sprite.Group()
 danger = pygame.sprite.Group()
 bottles = pygame.sprite.Group()
 chest = pygame.sprite.Group()
+particles = pygame.sprite.Group()
 
 
 def load_level(filename):
@@ -143,33 +144,21 @@ class Girl(AnimatedSprite):
             if pygame.sprite.spritecollideany(self, chest):
                 game.win()
             if pygame.sprite.spritecollideany(self, danger):
-                # self.rect.y += tile_height
                 game.game_over(['Вы погибли при сражении с опасностью.'])
             self.rect.x += tile_width * self.v
-            if pygame.key.get_pressed()[pygame.K_RIGHT]:
-                self.rect.x += tile_width
             if pygame.key.get_pressed()[pygame.K_UP]:
                 self.rect.y -= tile_height * 2
             self.rect.y -= tile_height
-        if self.rect.y >= HEIGHT:
-            game.game_over(['Вы упали в пропасть.', 'В следущий раз будте внимательней.'])
-
-        '''if pygame.sprite.spritecollideany(self, tiles_group):
             if pygame.key.get_pressed()[pygame.K_RIGHT]:
-                self.rect.x += tile_width
-            if pygame.key.get_pressed()[pygame.K_UP]:1
-                self.rect.y -= tile_height * 2
+                for i in range(0, int(tile_width * 1.2), 20):
+                    self.rect.x += i
+                    if pygame.sprite.spritecollideany(self, bottles):
+                        self.bottles_of_water += 1
+                        game.remaining_time -= 2000
+                        pygame.sprite.spritecollideany(self, bottles).kill()
             self.rect.x += tile_width * self.v
         if self.rect.y >= HEIGHT:
-            game.game_over()
-        if pygame.sprite.spritecollideany(self, chest):
-            game.win()
-        if pygame.sprite.spritecollideany(self, danger):
-            game.game_over()
-        if pygame.sprite.spritecollideany(self, bottles):
-            self.bottles_of_water += 1
-            game.remaining_time -= 2000
-            pygame.sprite.spritecollideany(self, bottles).kill()'''
+            game.game_over(['Вы упали в пропасть.', 'В следущий раз будте внимательней.'])
 
 
 class Camera:
@@ -202,9 +191,18 @@ def start_screen():
                   pygame.font.Font(None, 30))
 
 
-'''class Particle(pygame.sprite.Sprite):
+def create_particles(position):
+    # количество создаваемых частиц
+    particle_count = 20
+    # возможные скорости
+    numbers = range(-5, 6)
+    for _ in range(particle_count):
+        Particle(position, random.choice(numbers), random.choice(numbers)).add(particles)
+
+
+class Particle(pygame.sprite.Sprite):
     # сгенерируем частицы разного размера
-    fire = [load_image("star.png")]
+    fire = [load_image("bottle.png")]
     for scale in (5, 10, 20):
         fire.append(pygame.transform.scale(fire[0], (scale, scale)))
 
@@ -212,12 +210,10 @@ def start_screen():
         super().__init__(all_sprites)
         self.image = random.choice(self.fire)
         self.rect = self.image.get_rect()
-
         # у каждой частицы своя скорость — это вектор
         self.velocity = [dx, dy]
         # и свои координаты
         self.rect.x, self.rect.y = pos
-
         # гравитация будет одинаковой (значение константы)
         self.gravity = GRAVITY
 
@@ -231,7 +227,6 @@ def start_screen():
         # убиваем, если частица ушла за экран
         if not self.rect.colliderect((0, 0, WIDTH, HEIGHT)):
             self.kill()
-'''
 
 
 class Game:
@@ -265,24 +260,27 @@ class Game:
 
     def win(self, *text):
         self.level += 1
+        create_particles((200, 200))
         self.new_play(['YOU WIN!', *text], pygame.font.Font(None, 50))
 
     def game_over(self, reason):
         self.new_play(['GAME OVER', *reason], pygame.font.Font(None, 50))
 
     def new_play(self, intro_text, font):
-        screen.blit(sky, (0, 0))
-        text_coord = 10
-        for line in intro_text:
-            string_rendered = font.render(line, 1, pygame.Color('black'))
-            intro_rect = string_rendered.get_rect()
-            text_coord += 10
-            intro_rect.top = text_coord
-            intro_rect.x = 10
-            text_coord += intro_rect.height
-            screen.blit(string_rendered, intro_rect)
-        fl = 0
         while True:
+            screen.blit(sky, (0, 0))
+            text_coord = 10
+            for line in intro_text:
+                string_rendered = font.render(line, 1, pygame.Color('black'))
+                intro_rect = string_rendered.get_rect()
+                text_coord += 10
+                intro_rect.top = text_coord
+                intro_rect.x = 10
+                text_coord += intro_rect.height
+                screen.blit(string_rendered, intro_rect)
+            fl = 0
+            particles.update()
+            particles.draw(screen)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
@@ -313,6 +311,7 @@ if __name__ == "__main__":
     start_screen()
     pygame.mixer.music.set_volume(0.5)
     pygame.time.set_timer(THIRSTY, 2000)
+
     while running:
         screen.blit(sky, (0, 0))
         for event in pygame.event.get():
