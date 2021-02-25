@@ -4,7 +4,7 @@ import sys
 import pygame
 
 pygame.init()
-FPS = 10
+FPS = 15
 WIDTH = 800
 HEIGHT = 600
 THIRSTY = pygame.USEREVENT + 1
@@ -12,7 +12,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 LEVEL_MAPS = {1: 'map.txt', 2: 'map2.txt', 3: 'map3.txt', 4: 'map4.txt', 5: 'map5.txt'}
 TIME_IN_LEVEl = [5, 10, 10, 10, 10]
-GRAVITY = 0.2
+GRAVITY = 0.35
 
 
 def load_image(name, colorkey=None):
@@ -46,6 +46,7 @@ danger = pygame.sprite.Group()
 bottles = pygame.sprite.Group()
 chest = pygame.sprite.Group()
 particles = pygame.sprite.Group()
+enemy = pygame.sprite.Group()
 
 
 def load_level(filename):
@@ -86,6 +87,8 @@ def generate_level(level):
                 player_ = Girl(x, y - 1)
             elif level[y][x] == 'c':
                 Tile('chest', x, y).add(chest)
+            elif level[y][x] == 'e':
+                Enemy(x, y)
     # вернем игрока, а также размер поля в клетках
     return player_, x + 1, y + 1
 
@@ -119,6 +122,22 @@ class AnimatedSprite(pygame.sprite.Sprite):
         self.image = self.frames[self.cur_frame]
 
 
+class Enemy(AnimatedSprite):
+    def __init__(self, x, y):
+        super().__init__(load_image("enemy_l.png", -1), 3, 1, x * tile_width, y * tile_height)
+        self.v, self.x, self.y = 0.09, x, y
+        enemy.add(self)
+
+    def update(self):
+        super().update()
+        self.rect.y += tile_height
+        if pygame.sprite.spritecollideany(self, tiles_group):
+            self.rect.y -= tile_height
+            if pygame.sprite.spritecollideany(self, bottles):
+                pygame.sprite.spritecollideany(self, bottles).kill()
+            self.rect.x += tile_width * self.v
+
+
 class Girl(AnimatedSprite):
     def __init__(self, x, y):
         super().__init__(load_image("girlr.png", -1), 3, 1, x * tile_width, y * tile_height)
@@ -135,6 +154,8 @@ class Girl(AnimatedSprite):
                 pygame.sprite.spritecollideany(self, bottles).kill()
             if pygame.sprite.spritecollideany(self, chest):
                 game.win()
+            if pygame.sprite.spritecollideany(self, enemy):
+                game.game_over(['Этот человек отобрал у вас всю воду.'])
         self.rect.y += tile_height
         if pygame.sprite.spritecollideany(self, tiles_group):
             if pygame.sprite.spritecollideany(self, bottles):
@@ -144,8 +165,7 @@ class Girl(AnimatedSprite):
             if pygame.sprite.spritecollideany(self, chest):
                 game.win()
             if pygame.sprite.spritecollideany(self, danger):
-                game.game_over(['Вы погибли при сражении с опасностью.'])
-            self.rect.x += tile_width * self.v
+                game.game_over(['Вы упали в яд.'])
             if pygame.key.get_pressed()[pygame.K_UP]:
                 self.rect.y -= tile_height * 2
             self.rect.y -= tile_height
@@ -156,6 +176,10 @@ class Girl(AnimatedSprite):
                         self.bottles_of_water += 1
                         game.remaining_time -= 2000
                         pygame.sprite.spritecollideany(self, bottles).kill()
+                    if pygame.sprite.spritecollideany(self, danger):
+                        game.game_over(['Вы упали в яд.'])
+                    if pygame.sprite.spritecollideany(self, enemy):
+                        game.game_over(['Этот человек отобрал у вас всю воду.'])
             self.rect.x += tile_width * self.v
         if self.rect.y >= HEIGHT:
             game.game_over(['Вы упали в пропасть.', 'В следущий раз будте внимательней.'])
@@ -249,6 +273,7 @@ class Game:
         for sprite in all_sprites:
             self.camera.apply(sprite)
         all_sprites.update()
+        enemy.draw(screen)
         all_sprites.draw(screen)
         player_group.draw(screen)
         t = clock.tick(FPS)
@@ -256,6 +281,7 @@ class Game:
         if (self.remaining_time >= TIME_IN_LEVEl[self.level - 1] * 1000
                 or self.hero.bottles_of_water < 0):
             self.game_over(['У вас закончилась вода'])
+
         pygame.display.flip()
 
     def win(self, *text):
