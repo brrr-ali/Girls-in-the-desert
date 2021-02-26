@@ -281,7 +281,9 @@ def shop():
         fon = pygame.transform.scale(shopwindows[i], size_picture)
         screen_shop.blit(fon, rect_picture[i])
         screen_shop.fill(pygame.Color('white'), pygame.Rect(*rect_button[i]))
-
+        font = pygame.font.Font(None, 30)
+        string_rendered = font.render(str(sales[i]), 1, pygame.Color(55, 55, 55))
+        screen_shop.blit(string_rendered, rect_button[i])
     while True:
         screen.blit(screen_shop, (0, 0))
         for event in pygame.event.get():
