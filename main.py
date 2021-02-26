@@ -265,43 +265,8 @@ shopwindows = [load_image('background0.jpg'), load_image('background1.png'),
 size_button = 250, 30
 
 
-def shop():
-    screen_shop = pygame.display.set_mode((WIDTH, HEIGHT))
-    sales = [3, 5, 10, 15]
-    rect_picture = [(100, i * size_picture[1] + 70 * (i + 1))
-                    for i in range(len(sales) // 2)] + [
-                       (WIDTH - (size_picture[0] + 100), i * size_picture[1] + 70 * (i + 1))
-                       for i in range(len(sales) // 2)]
-    rect_button = [(el[0], el[1] + size_picture[1] + 10, *size_button) for el in rect_picture]
-    screen_shop.fill(pygame.Color(200, 200, 200))
-    font = pygame.font.Font(None, 50)
-    string_rendered = font.render('Shop', 1, pygame.Color(55, 55, 55))
-    screen_shop.blit(string_rendered, (350, 10, 150, 150))
-    for i in range(len(rect_picture)):
-        fon = pygame.transform.scale(shopwindows[i], size_picture)
-        screen_shop.blit(fon, rect_picture[i])
-        screen_shop.fill(pygame.Color('white'), pygame.Rect(*rect_button[i]))
-        font = pygame.font.Font(None, 30)
-        string_rendered = font.render(str(sales[i]), 1, pygame.Color(55, 55, 55))
-        screen_shop.blit(string_rendered, rect_button[i])
-    while True:
-        screen.blit(screen_shop, (0, 0))
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                for i in range(len(rect_button)):
-                    if clicked(rect_button[i], event.pos):
-                        print('buy', i)
-            elif event.type == pygame.KEYDOWN:
-                return
-
-        pygame.display.flip()
-        clock.tick(FPS)
-
-
 class Game:
-    def __init__(self, level):
+    def __init__(self, level, *args):
         if level in LEVEL_MAPS:
             self.hero, self.level_x, self.level_y = generate_level(load_level(LEVEL_MAPS[level]))
         else:
@@ -309,7 +274,11 @@ class Game:
         self.level = level
         self.remaining_time = 0
         self.camera = Camera()
-        self.sky = load_image('landscape.jpg')
+        if args:
+            self.background_status = args[0]
+        else:
+            self.background_status = [2, 0, 0, 0]  # 0 - не куплено, 1 - куплено, 2 - выбрано
+        self.sky = shopwindows[self.background_status.index(2)]
 
     def update(self):
         # обновляем положение всех спрайтов
@@ -368,15 +337,59 @@ class Game:
                         fl = 1
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if clicked(shop_rect, event.pos):
-                        print('В магазин!')
-                        shop()
+                        self.shop()
                     else:
                         fl = 1
                 if fl:
                     for el in all_sprites:
                         el.kill()
-                    self.__init__(self.level)
+                    self.__init__(self.level, self.background_status)
                     return  # начинаем игру
+            pygame.display.flip()
+            clock.tick(FPS)
+
+    def shop(self):
+        screen_shop = pygame.display.set_mode((WIDTH, HEIGHT))
+        sales = [3, 5, 10, 15]
+        rect_picture = [(100, i * size_picture[1] + 70 * (i + 1))
+                        for i in range(len(sales) // 2)] + [
+                           (WIDTH - (size_picture[0] + 100), i * size_picture[1] + 70 * (i + 1))
+                           for i in range(len(sales) // 2)]
+        rect_button = [(el[0], el[1] + size_picture[1] + 10, *size_button) for el in rect_picture]
+        screen_shop.fill(pygame.Color(200, 200, 200))
+        font = pygame.font.Font(None, 50)
+        string_rendered = font.render('Shop', 1, pygame.Color(55, 55, 55))
+        screen_shop.blit(string_rendered, (350, 10, 150, 150))
+        while True:
+            screen.blit(screen_shop, (0, 0))
+            for i in range(len(rect_button)):
+                font = pygame.font.Font(None, 30)
+                fon = pygame.transform.scale(shopwindows[i], size_picture)
+                screen_shop.blit(fon, rect_picture[i])
+                screen_shop.fill(pygame.Color('white'), pygame.Rect(*rect_button[i]))
+                if game.background_status[i] == 0:
+                    string_rendered = font.render(str(sales[i]), 1, pygame.Color(55, 55, 55))
+                    screen_shop.blit(string_rendered, rect_button[i])
+                elif game.background_status[i] == 1:
+                    string_rendered = font.render('bought', 1, pygame.Color(55, 55, 55))
+                    screen_shop.blit(string_rendered, rect_button[i])
+                elif game.background_status[i] == 2:
+                    screen_shop.blit(load_image('check-mark.png'), (
+                        rect_button[i][0] + size_button[0] // 2, rect_button[i][1], *size_button))
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    for i in range(len(rect_button)):
+                        if clicked(rect_button[i], event.pos):
+                            if self.background_status[i] == 0:
+                                self.background_status[i] = 1
+                            elif self.background_status[i] == 1:
+                                self.background_status[self.background_status.index(2)] = 1
+                                self.background_status[i] = 2
+                                self.sky = shopwindows[i]
+                elif event.type == pygame.KEYDOWN:
+                    return
             pygame.display.flip()
             clock.tick(FPS)
 
