@@ -13,6 +13,7 @@ clock = pygame.time.Clock()
 LEVEL_MAPS = {1: 'map.txt', 2: 'map2.txt', 3: 'map3.txt', 4: 'map4.txt', 5: 'map5.txt'}
 TIME_IN_LEVEl = [5, 10, 10, 10, 10]
 GRAVITY = 0.35
+pygame.display.set_caption('Girl in desert')
 
 
 def load_image(name, colorkey=None):
@@ -258,27 +259,39 @@ def clicked(rect, pos):
 
 
 shop_fon = load_image('background0.jpg')
-size_picture = 200, 120
+size_picture = 250, 188
 shopwindows = [load_image('background0.jpg'), load_image('background1.png'),
                load_image('background2.png'), load_image('background3.jpg')]
+size_button = 250, 30
 
 
 def shop():
+    screen_shop = pygame.display.set_mode((WIDTH, HEIGHT))
     sales = [3, 5, 10, 15]
-    rectangular = [(50, i * size_picture[1] + 50, *size_picture)
-                   for i in range(len(sales) // 2)] + \
-                  [(size_picture[0] + 100, i * size_picture[1] + 50, *size_picture)
-                   for i in range(len(sales) // 2)]
-    print(rectangular)
+    rect_picture = [(100, i * size_picture[1] + 70 * (i + 1))
+                    for i in range(len(sales) // 2)] + [
+                       (WIDTH - (size_picture[0] + 100), i * size_picture[1] + 70 * (i + 1))
+                       for i in range(len(sales) // 2)]
+    rect_button = [(el[0], el[1] + size_picture[1] + 10, *size_button) for el in rect_picture]
+    screen_shop.fill(pygame.Color(200, 200, 200))
+    font = pygame.font.Font(None, 50)
+    string_rendered = font.render('Shop', 1, pygame.Color(55, 55, 55))
+    screen_shop.blit(string_rendered, (350, 10, 150, 150))
+    for i in range(len(rect_picture)):
+        fon = pygame.transform.scale(shopwindows[i], size_picture)
+        screen_shop.blit(fon, rect_picture[i])
+        screen_shop.fill(pygame.Color('white'), pygame.Rect(*rect_button[i]))
+
     while True:
-        screen.blit(shop_fon, (0, 0))
-        '''for i in range(len(rectangular)):
-            pass'''
+        screen.blit(screen_shop, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             elif event.type == pygame.KEYDOWN:
                 return
+
+        pygame.display.flip()
+        clock.tick(FPS)
 
 
 class Game:
