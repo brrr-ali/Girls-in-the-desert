@@ -253,6 +253,34 @@ class Particle(pygame.sprite.Sprite):
             self.kill()
 
 
+def clicked(rect, pos):
+    return rect[0] <= pos[0] <= rect[0] + rect[2] and rect[1] <= pos[1] <= rect[1] + rect[3]
+
+
+shop_fon = load_image('background0.jpg')
+size_picture = 200, 120
+shopwindows = [load_image('background0.jpg'), load_image('background1.png'),
+               load_image('background2.png'), load_image('background3.jpg')]
+
+
+def shop():
+    sales = [3, 5, 10, 15]
+    rectangular = [(50, i * size_picture[1] + 50, *size_picture)
+                   for i in range(len(sales) // 2)] + \
+                  [(size_picture[0] + 100, i * size_picture[1] + 50, *size_picture)
+                   for i in range(len(sales) // 2)]
+    print(rectangular)
+    while True:
+        screen.blit(shop_fon, (0, 0))
+        '''for i in range(len(rectangular)):
+            pass'''
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN:
+                return
+
+
 class Game:
     def __init__(self, level):
         if level in LEVEL_MAPS:
@@ -262,6 +290,7 @@ class Game:
         self.level = level
         self.remaining_time = 0
         self.camera = Camera()
+        self.sky = load_image('landscape.jpg')
 
     def update(self):
         # обновляем положение всех спрайтов
@@ -292,13 +321,10 @@ class Game:
     def game_over(self, reason):
         self.new_play(['GAME OVER', *reason], pygame.font.Font(None, 50))
 
-    def shop(self):
-        pass
-
     def new_play(self, intro_text, font):
         while True:
-            screen.blit(sky, (0, 0))
-            screen.blit(shop_image, (650, 450))
+            screen.blit(self.sky, (0, 0))
+            screen.blit(shop_image, shop_rect[:2])
             text_coord = 10
             for line in intro_text:
                 string_rendered = font.render(line, 1, pygame.Color('black'))
@@ -322,10 +348,9 @@ class Game:
                     else:
                         fl = 1
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if (shop_rect[0] <= event.pos[0] <= shop_rect[0] + shop_rect[2]
-                            and shop_rect[1] <= event.pos[1] <= shop_rect[1] + shop_rect[3]):
+                    if clicked(shop_rect, event.pos):
                         print('В магазин!')
-                        self.shop()
+                        shop()
                     else:
                         fl = 1
                 if fl:
@@ -341,16 +366,15 @@ if __name__ == "__main__":
     remaining_time = 0
     time = pygame.time.Clock
     running = True
-    sky = load_image('landscape.jpg')
     shop_image = load_image('shop.png', -1)
-    shop_rect = (*shop_image.get_size(), 650, 550)
+    shop_rect = (650, 450, *shop_image.get_size())
     game = Game(1)
     start_screen()
     pygame.mixer.music.set_volume(0.5)
     pygame.time.set_timer(THIRSTY, 2000)
 
     while running:
-        screen.blit(sky, (0, 0))
+        screen.blit(game.sky, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
