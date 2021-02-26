@@ -289,6 +289,10 @@ def shop():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                for i in range(len(rect_button)):
+                    if clicked(rect_button[i], event.pos):
+                        print('buy', i)
             elif event.type == pygame.KEYDOWN:
                 return
 
