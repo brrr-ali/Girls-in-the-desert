@@ -12,6 +12,8 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 LEVEL_MAPS = {1: 'map.txt', 2: 'map2.txt', 3: 'map3.txt', 4: 'map4.txt', 5: 'map5.txt'}
 TIME_IN_LEVEl = [5, 10, 10, 10, 10]
+count_of_jewerly = 0
+loss_of_jewelry = 0
 GRAVITY = 0.35
 pygame.display.set_caption('Girl in desert')
 
@@ -38,6 +40,7 @@ tile_images = {
     'piece_ground': load_image('кусокземли.png', -1),
     'poison': load_image('poison.png', -1),
     'chest': load_image('chest.png', -1),
+    'jew': load_image('ringpurple.png', -1),
 }
 tile_width = tile_height = 50
 all_sprites = pygame.sprite.Group()
@@ -48,6 +51,7 @@ bottles = pygame.sprite.Group()
 chest = pygame.sprite.Group()
 particles = pygame.sprite.Group()
 enemy = pygame.sprite.Group()
+jewerly = pygame.sprite.Group()
 
 
 def load_level(filename):
@@ -90,6 +94,8 @@ def generate_level(level):
                 Tile('chest', x, y).add(chest)
             elif level[y][x] == 'e':
                 Enemy(x, y)
+            elif level[y][x] == 'j':
+                Tile('jew', x, y).add(jewerly)
     # вернем игрока, а также размер поля в клетках
     return player_, x + 1, y + 1
 
@@ -147,6 +153,7 @@ class Girl(AnimatedSprite):
         self.bottles_of_water = 3
 
     def update(self):
+        global loss_of_jewelry
         super().update()
         if pygame.sprite.spritecollideany(self, tiles_group):
             if pygame.sprite.spritecollideany(self, bottles):
@@ -155,6 +162,9 @@ class Girl(AnimatedSprite):
                 pygame.sprite.spritecollideany(self, bottles).kill()
             if pygame.sprite.spritecollideany(self, chest):
                 game.win()
+            if pygame.sprite.spritecollideany(self, jewerly):
+                loss_of_jewelry += 1
+                pygame.sprite.spritecollideany(self, jewerly).kill()
             if pygame.sprite.spritecollideany(self, enemy):
                 game.game_over(['Этот человек отобрал у вас всю воду.'])
         self.rect.y += tile_height
@@ -165,11 +175,29 @@ class Girl(AnimatedSprite):
                 pygame.sprite.spritecollideany(self, bottles).kill()
             if pygame.sprite.spritecollideany(self, chest):
                 game.win()
+            if pygame.sprite.spritecollideany(self, bottles):
+                self.bottles_of_water += 1
+                game.remaining_time -= 2000
+                pygame.sprite.spritecollideany(self, bottles).kill()
+            if pygame.sprite.spritecollideany(self, chest):
+                game.win()
+            if pygame.sprite.spritecollideany(self, jewerly):
+                loss_of_jewelry += 1
+                pygame.sprite.spritecollideany(self, jewerly).kill()
             if pygame.sprite.spritecollideany(self, danger):
+                # self.rect.y += tile_height
+                game.game_over(['Вы погибли при сражении с опасностью.'])
+            self.rect.x += tile_width * self.v
+            if pygame.key.get_pressed()[pygame.K_RIGHT]:
+                self.rect.x += tile_width
                 game.game_over(['Вы упали в яд.'])
             if pygame.key.get_pressed()[pygame.K_UP]:
                 self.rect.y -= tile_height * 2
             self.rect.y -= tile_height
+        if self.rect.y >= HEIGHT:
+            game.game_over(['Вы упали в пропасть.', 'В следущий раз будте внимательней.'])
+
+        if pygame.sprite.spritecollideany(self, tiles_group):
             if pygame.key.get_pressed()[pygame.K_RIGHT]:
                 for i in range(0, int(tile_width * 1.2), 20):
                     self.rect.x += i
@@ -210,10 +238,12 @@ def start_screen():
     pygame.mixer.init()
     pygame.mixer.music.load('music2.mp3')
     pygame.mixer.music.play(-1)
-    game.new_play(["Девушка в пустыне", "",
-                   "Найди сундук сокровищами, но следи за осташимся количество воды.",
-                   "Для выключения музыки нажми - 1, для включения - 2"],
-                  pygame.font.Font(None, 30))
+    game.new_play(["        ДЕВУШКА В ПУСТЫНЕ", "",
+                   "    Найди сундук с сокровищами, но следи ",
+                   "        за оставшимся количеством воды.",
+                   "    Для выключения музыки нажми - 1,",
+                   "        для включения - 2"],
+                  pygame.font.Font('data/ofont.ru_Roland.ttf', 35))
 
 
 def create_particles(position):
@@ -235,10 +265,12 @@ class Particle(pygame.sprite.Sprite):
         super().__init__(all_sprites)
         self.image = random.choice(self.fire)
         self.rect = self.image.get_rect()
+
         # у каждой частицы своя скорость — это вектор
         self.velocity = [dx, dy]
         # и свои координаты
         self.rect.x, self.rect.y = pos
+
         # гравитация будет одинаковой (значение константы)
         self.gravity = GRAVITY
 
@@ -279,13 +311,20 @@ class Game:
         else:
             self.background_status = [2, 0, 0, 0]  # 0 - не куплено, 1 - куплено, 2 - выбрано
         self.sky = shopwindows[self.background_status.index(2)]
+        self.counter_bottle = load_image('bottle.png', -1)
+        self.counter_money = load_image('ringpurple.png', -1)
 
     def update(self):
+        self.camera.update(self.hero)
         # обновляем положение всех спрайтов
-        Tile('bottle_of_water', 0, 0)
-        font = pygame.font.Font(None, 50)
+        # делаем счетчик добытых ресурсов
+        screen.blit(self.counter_bottle, (0, 0))
+        screen.blit(self.counter_money, (70, 10))
+        font = pygame.font.Font('data/ofont.ru_Roland.ttf', 20)
         text = font.render(str(self.hero.bottles_of_water), True, (0, 0, 0))
+        text2 = font.render(str(count_of_jewerly + loss_of_jewelry), True, (0, 0, 0))
         screen.blit(text, (30, 20))
+        screen.blit(text2, (130, 20))
         for sprite in all_sprites:
             self.camera.apply(sprite)
         all_sprites.update()
@@ -297,22 +336,38 @@ class Game:
         if (self.remaining_time >= TIME_IN_LEVEl[self.level - 1] * 1000
                 or self.hero.bottles_of_water < 0):
             self.game_over(['У вас закончилась вода'])
-
-        self.camera.update(self.hero)
         pygame.display.flip()
 
     def win(self, *text):
+        global count_of_jewerly, loss_of_jewelry
+        count_of_jewerly += loss_of_jewelry
+        loss_of_jewelry = 0
         self.level += 1
         create_particles((200, 200))
         self.new_play(['YOU WIN!', *text], pygame.font.Font(None, 50))
+        self.new_play(['        ПОБЕДА!', '',
+                       'Странник, ты прошел этот путь,',
+                       '    но это было только его начало...'],
+                      pygame.font.Font('data/ofont.ru_Roland.ttf', 35))
 
     def game_over(self, reason):
-        self.new_play(['GAME OVER', *reason], pygame.font.Font(None, 50))
+        global loss_of_jewelry
+        loss_of_jewelry = 0
+        self.new_play(['            ПРОВАЛ...', '',
+                       'Умереть в пустыне - не страшно',
+                       '    там вас точно ждет покой.',
+                       *reason], pygame.font.Font('data/ofont.ru_Roland.ttf', 35))
 
     def new_play(self, intro_text, font):
         while True:
             screen.blit(self.sky, (0, 0))
             screen.blit(shop_image, shop_rect[:2])
+            if intro_text[0] == '        ПОБЕДА!':
+                text = pygame.font.Font('data/ofont.ru_Roland.ttf', 50).render(
+                    str(count_of_jewerly),
+                    True, (0, 0, 0))
+                screen.blit(self.counter_money, (0, 60))
+                screen.blit(text, (50, 60))
             text_coord = 10
             for line in intro_text:
                 string_rendered = font.render(line, 1, pygame.Color('black'))
@@ -404,7 +459,6 @@ if __name__ == "__main__":
     start_screen()
     pygame.mixer.music.set_volume(0.5)
     pygame.time.set_timer(THIRSTY, 2000)
-
     while running:
         screen.blit(game.sky, (0, 0))
         for event in pygame.event.get():
