@@ -413,7 +413,14 @@ class Game:
         string_rendered = font.render('Магазин', 1, pygame.Color(55, 55, 55))
         screen_shop.blit(string_rendered, (300, 5, 150, 150))
         global count_of_jewerly
+        screen_shop.blit(self.counter_money, (5, 20))
         while True:
+            text = pygame.font.Font('data/ofont_ru_Roland.ttf', 50).render(
+                str(count_of_jewerly),
+                True, (0, 0, 0))
+            screen_shop.fill(pygame.Color(200, 200, 200),
+                             pygame.Rect(50, 0, 40, 80))
+            screen_shop.blit(text, (50, 0))
             screen.blit(screen_shop, (0, 0))
             for i in range(len(rect_button)):
                 font = pygame.font.Font('data/ofont_ru_Roland.ttf', 26)
