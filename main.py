@@ -334,6 +334,7 @@ class Game:
 
     def win(self, *text):
         global count_of_jewerly, loss_of_jewelry
+        #при победе начисляем собранные на уровне монетки
         count_of_jewerly += loss_of_jewelry
         loss_of_jewelry = 0
         self.level += 1
@@ -345,6 +346,7 @@ class Game:
 
     def game_over(self, reason):
         global loss_of_jewelry
+        # при поражении все собранные на уровне монетки теряются
         loss_of_jewelry = 0
         self.new_play(['            ПРОВАЛ...', '',
                        'Умереть в пустыне - не страшно',
