@@ -402,7 +402,7 @@ class Game:
     def shop(self):
         # создаем новый Surface, на него накладываем изображение фонов и делаем "кнопки"
         screen_shop = pygame.display.set_mode((WIDTH, HEIGHT))
-        sales = [3, 5, 10, 15]
+        sales = [0, 5, 7, 10]
         rect_picture = [(100, i * size_picture[1] + 70 * (i + 1))
                         for i in range(len(sales) // 2)] + [
                            (WIDTH - (size_picture[0] + 100), i * size_picture[1] + 70 * (i + 1))
