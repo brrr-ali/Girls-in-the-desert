@@ -200,6 +200,8 @@ class Girl(AnimatedSprite):
                         loss_of_jewelry += 1
                         pygame.sprite.spritecollideany(self, jewerly).kill()
             self.rect.x += tile_width * self.v
+        else:
+            pygame.time.delay(int(GRAVITY * 100))
         if self.rect.y >= HEIGHT:
             game.game_over(['Вы упали в пропасть.', 'В следущий раз будте внимательней.'])
 
