@@ -37,7 +37,7 @@ def load_image(name, colorkey=None):
 
 tile_images = {
     'bottle_of_water': load_image('bottle.png', -1),
-    'piece_ground': load_image('кусокземли.png', -1),
+    'piece_ground': load_image('ground.png', -1),
     'poison': load_image('poison.png', -1),
     'chest': load_image('chest.png', -1),
     'jew': load_image('ringpurple.png', -1),
@@ -228,7 +228,7 @@ class Camera:
 def start_screen():
     # включаем фоновую музыку
     pygame.mixer.init()
-    pygame.mixer.music.load('music2.mp3')
+    pygame.mixer.music.load('data/music.mp3')
     pygame.mixer.music.play(-1)
     game.new_play(["        ДЕВУШКА В ПУСТЫНЕ", "",
                    "    Найди сундук с сокровищами, но следи ",
