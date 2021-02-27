@@ -10,8 +10,9 @@ HEIGHT = 600
 THIRSTY = pygame.USEREVENT + 1
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-LEVEL_MAPS = {1: 'map.txt', 2: 'map2.txt', 3: 'map3.txt', 4: 'map4.txt', 5: 'map5.txt'}
-TIME_IN_LEVEl = [5, 10, 10, 10, 10]
+LEVEL_MAPS = {1: 'map.txt', 2: 'map2.txt', 3: 'map3.txt', 4: 'map4.txt', 5: 'map5.txt',
+              6: 'map6.txt', 7: 'map7.txt', 8: 'map8.txt', 9: 'map9.txt', 10: 'map10.txt'}
+TIME_IN_LEVEl = [5, 10, 10, 10, 10, 10, 10, 10, 10, 10]
 count_of_jewerly = 0
 loss_of_jewelry = 0
 GRAVITY = 0.35
