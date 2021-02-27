@@ -481,7 +481,7 @@ if __name__ == "__main__":
     elapsed_time = 0
     time = pygame.time.Clock
     running = True
-    shop_image = load_image('shop2.png', -1)
+    shop_image = load_image('shop.png', -1)
     shop_rect = (650, 450, *shop_image.get_size())
     game = Game(1)
     start_screen()
