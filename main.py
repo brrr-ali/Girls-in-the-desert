@@ -153,8 +153,8 @@ class Girl(AnimatedSprite):
         self.bottles_of_water = 3
 
     def update(self):
-        global loss_of_jewelry
         super().update()
+        global loss_of_jewelry
         if pygame.sprite.spritecollideany(self, tiles_group):
             if pygame.sprite.spritecollideany(self, bottles):
                 self.bottles_of_water += 1
@@ -175,29 +175,14 @@ class Girl(AnimatedSprite):
                 pygame.sprite.spritecollideany(self, bottles).kill()
             if pygame.sprite.spritecollideany(self, chest):
                 game.win()
-            if pygame.sprite.spritecollideany(self, bottles):
-                self.bottles_of_water += 1
-                game.remaining_time -= 2000
-                pygame.sprite.spritecollideany(self, bottles).kill()
-            if pygame.sprite.spritecollideany(self, chest):
-                game.win()
             if pygame.sprite.spritecollideany(self, jewerly):
                 loss_of_jewelry += 1
                 pygame.sprite.spritecollideany(self, jewerly).kill()
             if pygame.sprite.spritecollideany(self, danger):
-                # self.rect.y += tile_height
-                game.game_over(['Вы погибли при сражении с опасностью.'])
-            self.rect.x += tile_width * self.v
-            if pygame.key.get_pressed()[pygame.K_RIGHT]:
-                self.rect.x += tile_width
                 game.game_over(['Вы упали в яд.'])
             if pygame.key.get_pressed()[pygame.K_UP]:
                 self.rect.y -= tile_height * 2
             self.rect.y -= tile_height
-        if self.rect.y >= HEIGHT:
-            game.game_over(['Вы упали в пропасть.', 'В следущий раз будте внимательней.'])
-
-        if pygame.sprite.spritecollideany(self, tiles_group):
             if pygame.key.get_pressed()[pygame.K_RIGHT]:
                 for i in range(0, int(tile_width * 1.2), 20):
                     self.rect.x += i
@@ -209,6 +194,9 @@ class Girl(AnimatedSprite):
                         game.game_over(['Вы упали в яд.'])
                     if pygame.sprite.spritecollideany(self, enemy):
                         game.game_over(['Этот человек отобрал у вас всю воду.'])
+                    if pygame.sprite.spritecollideany(self, jewerly):
+                        loss_of_jewelry += 1
+                        pygame.sprite.spritecollideany(self, jewerly).kill()
             self.rect.x += tile_width * self.v
         if self.rect.y >= HEIGHT:
             game.game_over(['Вы упали в пропасть.', 'В следущий раз будте внимательней.'])
@@ -243,7 +231,7 @@ def start_screen():
                    "        за оставшимся количеством воды.",
                    "    Для выключения музыки нажми - 1,",
                    "        для включения - 2"],
-                  pygame.font.Font('data/ofont.ru_Roland.ttf', 35))
+                  pygame.font.Font('data/ofont_ru_Roland.ttf', 35))
 
 
 def create_particles(position):
@@ -320,7 +308,7 @@ class Game:
         # делаем счетчик добытых ресурсов
         screen.blit(self.counter_bottle, (0, 0))
         screen.blit(self.counter_money, (70, 10))
-        font = pygame.font.Font('data/ofont.ru_Roland.ttf', 20)
+        font = pygame.font.Font('data/ofont_ru_Roland.ttf', 20)
         text = font.render(str(self.hero.bottles_of_water), True, (0, 0, 0))
         text2 = font.render(str(count_of_jewerly + loss_of_jewelry), True, (0, 0, 0))
         screen.blit(text, (30, 20))
@@ -344,11 +332,10 @@ class Game:
         loss_of_jewelry = 0
         self.level += 1
         create_particles((200, 200))
-        self.new_play(['YOU WIN!', *text], pygame.font.Font(None, 50))
         self.new_play(['        ПОБЕДА!', '',
                        'Странник, ты прошел этот путь,',
-                       '    но это было только его начало...'],
-                      pygame.font.Font('data/ofont.ru_Roland.ttf', 35))
+                       '    но это было только его начало...', *text],
+                      pygame.font.Font('data/ofont_ru_Roland.ttf', 35))
 
     def game_over(self, reason):
         global loss_of_jewelry
@@ -356,14 +343,14 @@ class Game:
         self.new_play(['            ПРОВАЛ...', '',
                        'Умереть в пустыне - не страшно',
                        '    там вас точно ждет покой.',
-                       *reason], pygame.font.Font('data/ofont.ru_Roland.ttf', 35))
+                       *reason], pygame.font.Font('data/ofont_ru_Roland.ttf', 35))
 
     def new_play(self, intro_text, font):
         while True:
             screen.blit(self.sky, (0, 0))
             screen.blit(shop_image, shop_rect[:2])
             if intro_text[0] == '        ПОБЕДА!':
-                text = pygame.font.Font('data/ofont.ru_Roland.ttf', 50).render(
+                text = pygame.font.Font('data/ofont_ru_Roland.ttf', 50).render(
                     str(count_of_jewerly),
                     True, (0, 0, 0))
                 screen.blit(self.counter_money, (0, 60))
