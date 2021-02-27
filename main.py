@@ -19,11 +19,11 @@ pygame.display.set_caption('Girl in desert')
 
 
 def load_image(name, colorkey=None):
+    # функция для загрузки изображений
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
         print(f"Файл с изображением '{fullname}' не найден")
         sys.exit()
-
     image = pygame.image.load(fullname)
     if colorkey is not None:
         image = image.convert()
@@ -137,6 +137,7 @@ class Enemy(AnimatedSprite):
 
     def update(self):
         super().update()
+        # перемещение врага
         self.rect.y += tile_height
         if pygame.sprite.spritecollideany(self, tiles_group):
             self.rect.y -= tile_height
@@ -155,10 +156,11 @@ class Girl(AnimatedSprite):
     def update(self):
         super().update()
         global loss_of_jewelry
+        # проверяем пересечение девочки и предметов
         if pygame.sprite.spritecollideany(self, tiles_group):
             if pygame.sprite.spritecollideany(self, bottles):
                 self.bottles_of_water += 1
-                game.remaining_time -= 2000
+                game.elapsed_time -= 2000
                 pygame.sprite.spritecollideany(self, bottles).kill()
             if pygame.sprite.spritecollideany(self, chest):
                 game.win()
@@ -171,7 +173,7 @@ class Girl(AnimatedSprite):
         if pygame.sprite.spritecollideany(self, tiles_group):
             if pygame.sprite.spritecollideany(self, bottles):
                 self.bottles_of_water += 1
-                game.remaining_time -= 2000
+                game.elapsed_time -= 2000
                 pygame.sprite.spritecollideany(self, bottles).kill()
             if pygame.sprite.spritecollideany(self, chest):
                 game.win()
@@ -179,7 +181,7 @@ class Girl(AnimatedSprite):
                 loss_of_jewelry += 1
                 pygame.sprite.spritecollideany(self, jewerly).kill()
             if pygame.sprite.spritecollideany(self, danger):
-                game.game_over(['Вы упали в яд.'])
+                game.game_over(['Вы задели яд.'])
             if pygame.key.get_pressed()[pygame.K_UP]:
                 self.rect.y -= tile_height * 2
             self.rect.y -= tile_height
@@ -188,10 +190,10 @@ class Girl(AnimatedSprite):
                     self.rect.x += i
                     if pygame.sprite.spritecollideany(self, bottles):
                         self.bottles_of_water += 1
-                        game.remaining_time -= 2000
+                        game.elapsed_time -= 2000
                         pygame.sprite.spritecollideany(self, bottles).kill()
                     if pygame.sprite.spritecollideany(self, danger):
-                        game.game_over(['Вы упали в яд.'])
+                        game.game_over(['Вы задели яд.'])
                     if pygame.sprite.spritecollideany(self, enemy):
                         game.game_over(['Этот человек отобрал у вас всю воду.'])
                     if pygame.sprite.spritecollideany(self, jewerly):
@@ -223,6 +225,7 @@ class Camera:
 
 
 def start_screen():
+    # включаем фоновую музыку
     pygame.mixer.init()
     pygame.mixer.music.load('music2.mp3')
     pygame.mixer.music.play(-1)
@@ -275,6 +278,7 @@ class Particle(pygame.sprite.Sprite):
 
 
 def clicked(rect, pos):
+    # проверяет входит ли точка в заданную область
     return rect[0] <= pos[0] <= rect[0] + rect[2] and rect[1] <= pos[1] <= rect[1] + rect[3]
 
 
@@ -282,7 +286,7 @@ shop_fon = load_image('background0.jpg')
 size_picture = 250, 188
 shopwindows = [load_image('background0.jpg'), load_image('background1.png'),
                load_image('background2.png'), load_image('background3.jpg')]
-size_button = 250, 30
+size_button = 250, 40
 
 
 class Game:
@@ -292,7 +296,7 @@ class Game:
         else:
             self.win('Вы прошли все уровни.', 'Поздравляем с победой!')
         self.level = level
-        self.remaining_time = 0
+        self.elapsed_time = 0
         self.camera = Camera()
         if args:
             self.background_status = args[0]
@@ -320,8 +324,8 @@ class Game:
         enemy.draw(screen)
         player_group.draw(screen)
         t = clock.tick(FPS)
-        self.remaining_time += t
-        if (self.remaining_time >= TIME_IN_LEVEl[self.level - 1] * 1000
+        self.elapsed_time += t
+        if (self.elapsed_time >= TIME_IN_LEVEl[self.level - 1] * 1000
                 or self.hero.bottles_of_water < 0):
             self.game_over(['У вас закончилась вода'])
         pygame.display.flip()
@@ -331,7 +335,7 @@ class Game:
         count_of_jewerly += loss_of_jewelry
         loss_of_jewelry = 0
         self.level += 1
-        create_particles((200, 200))
+        create_particles((WIDTH // 2, HEIGHT // 2))
         self.new_play(['        ПОБЕДА!', '',
                        'Странник, ты прошел этот путь,',
                        '    но это было только его начало...', *text],
@@ -347,6 +351,7 @@ class Game:
 
     def new_play(self, intro_text, font):
         while True:
+            # выводим текст
             screen.blit(self.sky, (0, 0))
             screen.blit(shop_image, shop_rect[:2])
             if intro_text[0] == '        ПОБЕДА!':
@@ -365,6 +370,7 @@ class Game:
                 text_coord += intro_rect.height
                 screen.blit(string_rendered, intro_rect)
             fl = 0
+            # отрисовываем частицы
             particles.update()
             particles.draw(screen)
             for event in pygame.event.get():
@@ -378,6 +384,7 @@ class Game:
                     else:
                         fl = 1
                 elif event.type == pygame.MOUSEBUTTONDOWN:
+                    # проверяем хочет ли игрок в магазин
                     if clicked(shop_rect, event.pos):
                         self.shop()
                     else:
@@ -391,6 +398,7 @@ class Game:
             clock.tick(FPS)
 
     def shop(self):
+        # создаем новый Surface, на него накладываем изображение фонов и делаем "кнопки"
         screen_shop = pygame.display.set_mode((WIDTH, HEIGHT))
         sales = [3, 5, 10, 15]
         rect_picture = [(100, i * size_picture[1] + 70 * (i + 1))
@@ -399,21 +407,24 @@ class Game:
                            for i in range(len(sales) // 2)]
         rect_button = [(el[0], el[1] + size_picture[1] + 10, *size_button) for el in rect_picture]
         screen_shop.fill(pygame.Color(200, 200, 200))
-        font = pygame.font.Font(None, 50)
-        string_rendered = font.render('Shop', 1, pygame.Color(55, 55, 55))
-        screen_shop.blit(string_rendered, (350, 10, 150, 150))
+        font = pygame.font.Font('data/ofont_ru_Roland.ttf', 46)
+        string_rendered = font.render('Магазин', 1, pygame.Color(55, 55, 55))
+        screen_shop.blit(string_rendered, (300, 5, 150, 150))
+        global count_of_jewerly
         while True:
             screen.blit(screen_shop, (0, 0))
             for i in range(len(rect_button)):
-                font = pygame.font.Font(None, 30)
+                font = pygame.font.Font('data/ofont_ru_Roland.ttf', 26)
                 fon = pygame.transform.scale(shopwindows[i], size_picture)
                 screen_shop.blit(fon, rect_picture[i])
                 screen_shop.fill(pygame.Color('white'), pygame.Rect(*rect_button[i]))
+                # проверяем состояние каждого из фонов
+                # возможные: 0 - не куплено, 1 - куплено, 2 - используется сейчас
                 if game.background_status[i] == 0:
                     string_rendered = font.render(str(sales[i]), 1, pygame.Color(55, 55, 55))
                     screen_shop.blit(string_rendered, rect_button[i])
                 elif game.background_status[i] == 1:
-                    string_rendered = font.render('bought', 1, pygame.Color(55, 55, 55))
+                    string_rendered = font.render('куплено', 1, pygame.Color(55, 55, 55))
                     screen_shop.blit(string_rendered, rect_button[i])
                 elif game.background_status[i] == 2:
                     screen_shop.blit(load_image('check-mark.png'), (
@@ -423,21 +434,43 @@ class Game:
                     terminate()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     for i in range(len(rect_button)):
+                        # при нажатии на кнопку меняем статус фона
                         if clicked(rect_button[i], event.pos):
                             if self.background_status[i] == 0:
-                                self.background_status[i] = 1
+                                if sales[i] <= count_of_jewerly:
+                                    count_of_jewerly -= sales[i]
+                                    self.background_status[i] = 1
+                                    error_size = 323, 39
+                                    screen_shop.fill(pygame.Color(200, 200, 200),
+                                                     pygame.Rect((WIDTH - error_size[0]) // 2,
+                                                                 HEIGHT - error_size[1],
+                                                                 *error_size))
+                                else:
+                                    string_rendered = font.render('Украшений не достаточно', 1,
+                                                                  pygame.Color(55, 55, 55))
+                                    screen_shop.blit(string_rendered,
+                                                     ((WIDTH - string_rendered.get_width()) // 2,
+                                                      HEIGHT - string_rendered.get_height(),
+                                                      string_rendered.get_width(),
+                                                      string_rendered.get_height()))
                             elif self.background_status[i] == 1:
                                 self.background_status[self.background_status.index(2)] = 1
                                 self.background_status[i] = 2
                                 self.sky = shopwindows[i]
+                                error_size = 323, 39
+                                screen_shop.fill(pygame.Color(200, 200, 200),
+                                                 pygame.Rect((WIDTH - error_size[0]) // 2,
+                                                             HEIGHT - error_size[1],
+                                                             *error_size))
                 elif event.type == pygame.KEYDOWN:
+                    # для того чтобы выйти из магазина, нажимаем на любую клавишу клавиатуры
                     return
             pygame.display.flip()
             clock.tick(FPS)
 
 
 if __name__ == "__main__":
-    remaining_time = 0
+    elapsed_time = 0
     time = pygame.time.Clock
     running = True
     shop_image = load_image('shop2.jpg', -1)
