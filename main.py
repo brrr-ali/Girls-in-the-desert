@@ -334,7 +334,7 @@ class Game:
 
     def win(self, *text):
         global count_of_jewerly, loss_of_jewelry
-        #при победе начисляем собранные на уровне монетки
+        # при победе начисляем собранные на уровне монетки
         count_of_jewerly += loss_of_jewelry
         loss_of_jewelry = 0
         self.level += 1
@@ -349,8 +349,6 @@ class Game:
         # при поражении все собранные на уровне монетки теряются
         loss_of_jewelry = 0
         self.new_play(['            ПРОВАЛ...', '',
-                       'Умереть в пустыне - не страшно',
-                       '    там вас точно ждет покой.',
                        *reason], pygame.font.Font('data/ofont_ru_Roland.ttf', 35))
 
     def new_play(self, intro_text, font):
