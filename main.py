@@ -4,7 +4,7 @@ import sys
 import pygame
 
 pygame.init()
-FPS = 15
+FPS = 20
 WIDTH = 800
 HEIGHT = 600
 THIRSTY = pygame.USEREVENT + 1
@@ -183,7 +183,8 @@ class Girl(AnimatedSprite):
             if pygame.sprite.spritecollideany(self, danger):
                 game.game_over(['Вы задели яд.'])
             if pygame.key.get_pressed()[pygame.K_UP]:
-                self.rect.y -= tile_height * 2
+                for i in range(0, tile_height, int(tile_height * 0.2)):
+                    self.rect.y -= i
             self.rect.y -= tile_height
             if pygame.key.get_pressed()[pygame.K_RIGHT]:
                 for i in range(0, int(tile_width * 1.2), 20):
@@ -200,8 +201,6 @@ class Girl(AnimatedSprite):
                         loss_of_jewelry += 1
                         pygame.sprite.spritecollideany(self, jewerly).kill()
             self.rect.x += tile_width * self.v
-        else:
-            pygame.time.delay(int(GRAVITY * 100))
         if self.rect.y >= HEIGHT:
             game.game_over(['Вы упали в пропасть.', 'В следущий раз будте внимательней.'])
 
@@ -402,7 +401,7 @@ class Game:
     def shop(self):
         # создаем новый Surface, на него накладываем изображение фонов и делаем "кнопки"
         screen_shop = pygame.display.set_mode((WIDTH, HEIGHT))
-        sales = [3, 5, 10, 15]
+        sales = [0, 5, 7, 10]
         rect_picture = [(100, i * size_picture[1] + 70 * (i + 1))
                         for i in range(len(sales) // 2)] + [
                            (WIDTH - (size_picture[0] + 100), i * size_picture[1] + 70 * (i + 1))
